@@ -1,0 +1,12 @@
+[submodule "external/stb"]
+	path = external/stb
+	url = https://github.com/nothings/stb.git
+[submodule "external/glew-cmake"]
+	path = external/glew-cmake
+	url = https://github.com/Perlmint/glew-cmake.git
+[submodule "external/cpp-terminal"]
+	path = external/cpp-terminal
+	url = https://github.com/jupyter-xeus/cpp-terminal.git
+[submodule "external/argparse"]
+	path = external/argparse
+	url = https://github.com/p-ranav/argparse.git
