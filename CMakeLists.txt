@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -43,6 +43,7 @@ target_include_directories(show PRIVATE
     ${CMAKE_SOURCE_DIR}/external/glew-cmake/include
     ${CMAKE_SOURCE_DIR}/external/glfw/include
     ${CMAKE_SOURCE_DIR}/external/argparse/include
+    ${CMAKE_SOURCE_DIR}/external/cpp-terminal
     ${CMAKE_SOURCE_DIR}/external/stb
 )
 
