@@ -61,4 +61,5 @@ Optional arguments:
 
 ### Future Improvements
 
-Add edge detection kernel to improve output visual
+Add edge detection kernel to improve output visual  
+Add colored image output  
