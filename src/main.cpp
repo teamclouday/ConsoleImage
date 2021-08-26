@@ -7,6 +7,8 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <locale>
+#include <codecvt>
 #include <cmath>
 #include <cstdlib>
 #include <stdexcept>
@@ -33,7 +35,8 @@ int main(int argc, char** argv)
     // add selected characters
     argument.add_argument("-c", "--chars")
         .help("characters to use (dark to light)")
-        .default_value(std::string(" ▏▎▍▌▋▊▉"));
+        /* .default_value(std::wstring(L" ▏▎▍▌▋▊▉")); */
+        .default_value(std::string(" ░▒▓"));
     // get arguments
     try
     {
@@ -45,7 +48,9 @@ int main(int argc, char** argv)
         std::cout << argument;
         exit(-1);
     }
-    std::string chars = argument.get<std::string>("--chars");
+    std::string schars = argument.get<std::string>("--chars");
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring chars = converter.from_bytes(schars);
     int levels = (int)chars.length();
     if(levels <= 0)
     {
@@ -75,7 +80,7 @@ int main(int argc, char** argv)
         std::cout << argument;
         exit(-1);
     }
-    outputW = (int)((float)outputH * ((float)imgW / (float)imgH));
+    outputW = (int)((float)outputH * ((float)imgW / (float)imgH)) * 2;
 
     // init opengl context
     if(!glfwInit())
@@ -230,7 +235,7 @@ int main(int argc, char** argv)
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, mem.data());
     // process data to terminal output
     float step = 1.0f / levels;
-    std::vector<char> output(outputW * outputH);
+    std::vector<wchar_t> output(outputW * outputH);
     std::transform(mem.begin(), mem.end(), std::begin(output),
             [chars, step](const float val){
                 int idx = (int)std::round(val / step);
@@ -243,8 +248,8 @@ int main(int argc, char** argv)
     {
         for(int j = 0; j < outputW; j++)
         {
-            std::cout << output[j + i * outputW] << ' ';
-            if(j == outputW - 1) std::cout << std::endl;
+            std::wcout << output[j + i * outputW];
+            if(j == outputW - 1) std::wcout << std::endl;
         }
     }
 
