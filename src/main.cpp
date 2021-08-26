@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     // add selected characters
     argument.add_argument("-c", "--chars")
         .help("characters to use (dark to light)")
-        .default_value(std::string(" .:*+o&8@"));
+        .default_value(std::string(" ▏▎▍▌▋▊▉"));
     // get arguments
     try
     {
