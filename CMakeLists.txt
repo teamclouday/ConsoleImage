@@ -23,10 +23,6 @@ option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
 option(GLFW_INSTALL "Generate installation target" OFF)
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/argparse)
-option(CPPTERMINAL_BUILD_EXAMPLES "Set to ON to build examples" OFF)
-option(CPPTERMINAL_ENABLE_INSTALL "Set to ON to enable install" OFF)
-option(CPPTERMINAL_ENABLE_TESING "Set to ON to enable testing" OFF)
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/cpp-terminal)
 
 file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.hpp)
 add_executable(show ${SRC_FILES})
@@ -43,7 +39,6 @@ target_include_directories(show PRIVATE
     ${CMAKE_SOURCE_DIR}/external/glew-cmake/include
     ${CMAKE_SOURCE_DIR}/external/glfw/include
     ${CMAKE_SOURCE_DIR}/external/argparse/include
-    ${CMAKE_SOURCE_DIR}/external/cpp-terminal
     ${CMAKE_SOURCE_DIR}/external/stb
 )
 
@@ -52,6 +47,5 @@ target_link_libraries(show PRIVATE
     glfw
     OpenGL::GL
     argparse
-    cpp-terminal
 )
 
