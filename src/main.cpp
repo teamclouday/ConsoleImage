@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     // add selected characters
     argument.add_argument("-c", "--chars")
         .help("characters to use (dark to light)")
-        .default_value(std::string(".-*+o&8@"));
+        .default_value(std::string(" .:*+o&8@"));
     // get arguments
     try
     {
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
         exit(-1);
     }
     std::string chars = argument.get<std::string>("--chars");
-    int levels = chars.length();
+    int levels = (int)chars.length();
     if(levels <= 0)
     {
         std::cerr << "Invalid chars argument: cannot be empty" << std::endl;
@@ -84,18 +84,20 @@ int main(int argc, char** argv)
         exit(-1);
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* context = glfwCreateWindow(outputW, outputH, "ConsoleImage", nullptr, nullptr);
+    GLFWwindow* context = glfwCreateWindow(outputW, outputH, "", nullptr, nullptr);
     if(!context)
     {
         if(verbose) std::cerr << "Failed to create GLFW context" << std::endl;
         exit(-1);
     }
     glfwMakeContextCurrent(context);
+    glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK)
     {
         if(verbose) std::cerr << "Failed to init OpenGL context" << std::endl;
         exit(-1);
     }
+    glEnable(GL_TEXTURE_2D);
     if(verbose) std::cout << "OpenGL context created" << std::endl;
 
     // render buffer
@@ -115,17 +117,38 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // check if image too large
+    GLint limitSize = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &limitSize);
+    if (imgW > limitSize || imgH > limitSize)
+    {
+        if (verbose) std::cerr << "Image too large (limit: " << limitSize << "x" << limitSize << ")" << std::endl;
+        exit(-1);
+    }
     // prepare original image texture
     GLuint imgTex;
     glGenTextures(1, &imgTex);
     glBindTexture(GL_TEXTURE_2D, imgTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgW, imgH, 0, imgC > 3 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, img);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(img);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLenum imgFormat = GL_RGBA;
+    switch (imgC)
+    {
+    case 1:
+        imgFormat = GL_RED;
+        break;
+    case 2:
+        imgFormat = GL_RG;
+        break;
+    case 3:
+        imgFormat = GL_RGB;
+        break;
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgW, imgH, 0, imgFormat, GL_UNSIGNED_BYTE, img);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(img);
     // prepare shaders
     GLuint shaderVert = glCreateShader(GL_VERTEX_SHADER);
     GLuint shaderFrag = glCreateShader(GL_FRAGMENT_SHADER);
@@ -210,7 +233,7 @@ int main(int argc, char** argv)
     std::vector<char> output(outputW * outputH);
     std::transform(mem.begin(), mem.end(), std::begin(output),
             [chars, step](const float val){
-                int idx = std::round(val / step);
+                int idx = (int)std::round(val / step);
                 return chars[idx];
             });
     if(verbose) std::cout << "Image processed" << std::endl;
