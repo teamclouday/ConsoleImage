@@ -63,3 +63,4 @@ Optional arguments:
 
 Add edge detection kernel to improve output visual  
 Add colored image output  
+Wait for C++17 new functionalities for converting `std::string` to `std::wstring`, or use 3rd party library for it  
