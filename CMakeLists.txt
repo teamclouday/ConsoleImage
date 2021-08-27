@@ -11,7 +11,7 @@ add_definitions(-D_UNICODE)
 add_definitions(-DGLEW_STATIC)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -fpermissive")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -g -fpermissive")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

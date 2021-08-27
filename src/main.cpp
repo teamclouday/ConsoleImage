@@ -249,6 +249,8 @@ int main(int argc, char** argv)
     std::transform(mem.begin(), mem.end(), std::begin(output),
             [chars, step](const float val){
                 int idx = (int)std::round(val / step);
+                idx = idx >= (int)chars.size() ? ((int)chars.size() - 1) : idx;
+                idx = idx < 0 ? 0 : idx;
                 return chars[idx];
             });
     if(verbose) std::cout << "Image processed" << std::endl;
