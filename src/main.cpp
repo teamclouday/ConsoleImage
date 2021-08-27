@@ -187,10 +187,10 @@ int main(int argc, char** argv)
     GLuint shaderVert = glCreateShader(GL_VERTEX_SHADER);
     GLuint shaderFrag = glCreateShader(GL_FRAGMENT_SHADER);
     const char* shaderVertContent =
-    #include "render.vert"
+    #include "render.vert.glsl"
     ;
     const char* shaderFragContent =
-    #include "render.frag"
+    #include "render.frag.glsl"
     ;
     glShaderSource(shaderVert, 1, &shaderVertContent, nullptr);
     glShaderSource(shaderFrag, 1, &shaderFragContent, nullptr);
