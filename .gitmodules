@@ -10,3 +10,6 @@
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "external/cpp-terminal"]
+	path = external/cpp-terminal
+	url = https://github.com/jupyter-xeus/cpp-terminal.git

@@ -45,6 +45,7 @@ target_include_directories(show PRIVATE
     ${CMAKE_SOURCE_DIR}/external/glfw/include
     ${CMAKE_SOURCE_DIR}/external/argparse/include
     ${CMAKE_SOURCE_DIR}/external/stb
+    ${CMAKE_SOURCE_DIR}/external/cpp-terminal
 )
 
 target_link_libraries(show PRIVATE

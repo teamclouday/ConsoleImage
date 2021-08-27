@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <argparse/argparse.hpp>
+#include <cpp-terminal/terminal.h>
 #include <GLFW/glfw3.h>
 #include <istream>
 #define STB_IMAGE_IMPLEMENTATION
@@ -17,6 +18,18 @@
 #include <cstdlib>
 #include <stdexcept>
 
+struct Vec3
+{
+    float r;
+    float g;
+    float b;
+    static int clamp(int val)
+    {
+        val = val < 0 ? 0 : val;
+        val = val > 255 ? 255 : val;
+        return val;
+    }
+};
 
 int main(int argc, char** argv)
 {
@@ -32,6 +45,11 @@ int main(int argc, char** argv)
     // add verbose option
     argument.add_argument("-v", "--verbose")
         .help("show processing details")
+        .default_value(false)
+        .implicit_value(true);
+    // add colored option
+    argument.add_argument("--color")
+        .help("colored output")
         .default_value(false)
         .implicit_value(true);
     // add image size
@@ -68,6 +86,7 @@ int main(int argc, char** argv)
         std::cout << argument;
         exit(-1);
     }
+    bool colored = argument.get<bool>("--color");
     bool verbose = argument.get<bool>("--verbose");
     if(verbose) std::cout << "Arguments parsed" << std::endl;
     
@@ -218,13 +237,20 @@ int main(int argc, char** argv)
     GLuint FBO;
     glGenFramebuffers(1, &FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    GLuint FBOtex;
-    glGenTextures(1, &FBOtex);
-    glBindTexture(GL_TEXTURE_2D, FBOtex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, outputW, outputH, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+    GLuint FBOtex[2];
+    glGenTextures(2, FBOtex);
+    glBindTexture(GL_TEXTURE_2D, FBOtex[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, outputW, outputH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, FBOtex, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, FBOtex[0], 0);
+    glBindTexture(GL_TEXTURE_2D, FBOtex[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, outputW, outputH, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, FBOtex[1], 0);
+    GLenum DrawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, DrawBuffers);
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         if(verbose) std::cerr << "Failed to create OpenGL framebuffer" << std::endl;
@@ -240,13 +266,16 @@ int main(int argc, char** argv)
     glDrawArrays(GL_QUADS, 0, 4);
 
     // get data from texture
-    std::vector<float> mem(outputW * outputH);
-    glBindTexture(GL_TEXTURE_2D, FBOtex);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, mem.data());
+    std::vector<Vec3> mem1(outputW * outputH);
+    std::vector<float> mem2(outputW * outputH);
+    glBindTexture(GL_TEXTURE_2D, FBOtex[0]);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, mem1.data());
+    glBindTexture(GL_TEXTURE_2D, FBOtex[1]);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, mem2.data());
     // process data to terminal output
     float step = 1.0f / levels;
     std::vector<std::string> output(outputW * outputH);
-    std::transform(mem.begin(), mem.end(), std::begin(output),
+    std::transform(mem2.begin(), mem2.end(), std::begin(output),
             [chars, step](const float val){
                 int idx = (int)std::round(val / step);
                 idx = idx >= (int)chars.size() ? ((int)chars.size() - 1) : idx;
@@ -256,14 +285,31 @@ int main(int argc, char** argv)
     if(verbose) std::cout << "Image processed" << std::endl;
 
     // output to terminal
+    using Term::bg;
+    using Term::color;
+    using Term::color24_bg;
     for(int i = 0; i < outputH; i++)
     {
         for(int j = 0; j < outputW; j++)
         {
+            if(colored)
+            {
+                auto& vec = mem1[j + i * outputW];
+                std::cout << color24_bg(
+                    Vec3::clamp((int)(vec.r * 255.0f)),
+                    Vec3::clamp((int)(vec.g * 255.0f)),
+                    Vec3::clamp((int)(vec.b * 255.0f))
+                );
+            }
             std::cout << output[j + i * outputW];
-            if(j == outputW - 1) std::cout << std::endl;
+            if(j == outputW - 1) 
+            {
+                if(colored) std::cout << color(bg::reset);
+                std::cout << std::endl;
+            }
         }
     }
+    if(colored) std::cout << color(bg::reset);
 
     glfwDestroyWindow(context);
     glfwTerminate();
