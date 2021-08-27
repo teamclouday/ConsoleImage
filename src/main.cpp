@@ -4,6 +4,9 @@
 #include <istream>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 #include <vector>
 #include <iostream>
@@ -17,6 +20,9 @@
 
 int main(int argc, char** argv)
 {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+#endif
     // build argument parser
     argparse::ArgumentParser argument("ConsoleImage");
     // add input image path
@@ -24,7 +30,7 @@ int main(int argc, char** argv)
         .help("image path to display")
         .required();
     // add verbose option
-    argument.add_argument("--verbose")
+    argument.add_argument("-v", "--verbose")
         .help("show processing details")
         .default_value(false)
         .implicit_value(true);
@@ -36,9 +42,8 @@ int main(int argc, char** argv)
     // add selected characters
     argument.add_argument("-c", "--chars")
         .help("characters to use (dark to light)")
-        // .default_value(std::string(L" ▏▎▍▌▋▊▉"));
-        // .default_value(std::string(" ░▒▓"));
-        .default_value(std::string(" \u2591\u2592\u2593"));
+        .default_value(std::vector<std::string>())
+        .append();
     // get arguments
     try
     {
@@ -50,11 +55,13 @@ int main(int argc, char** argv)
         std::cout << argument;
         exit(-1);
     }
-    // std::string schars = argument.get<std::string>("--chars");
-    // std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    // std::wstring chars = converter.from_bytes(schars);
-    std::string chars = argument.get<std::string>("--chars");
-    int levels = (int)chars.length();
+    auto chars = argument.get<std::vector<std::string>>("--chars");
+    if(!argument.is_used("--chars"))
+    {
+        // chars = {" ", "░", "▒", "▓"};
+        chars = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉"};
+    }
+    int levels = (int)chars.size();
     if(levels <= 0)
     {
         std::cerr << "Invalid chars argument: cannot be empty" << std::endl;
@@ -238,7 +245,7 @@ int main(int argc, char** argv)
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, mem.data());
     // process data to terminal output
     float step = 1.0f / levels;
-    std::vector<char> output(outputW * outputH);
+    std::vector<std::string> output(outputW * outputH);
     std::transform(mem.begin(), mem.end(), std::begin(output),
             [chars, step](const float val){
                 int idx = (int)std::round(val / step);
