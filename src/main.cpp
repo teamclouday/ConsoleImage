@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <argparse/argparse.hpp>
 #include <GLFW/glfw3.h>
+#include <istream>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -36,7 +37,8 @@ int main(int argc, char** argv)
     argument.add_argument("-c", "--chars")
         .help("characters to use (dark to light)")
         // .default_value(std::string(L" ▏▎▍▌▋▊▉"));
-        .default_value(std::string(" ░▒▓"));
+        // .default_value(std::string(" ░▒▓"));
+        .default_value(std::string(" \u2591\u2592\u2593"));
     // get arguments
     try
     {

@@ -10,3 +10,9 @@
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "external/icu"]
+	path = external/icu
+	url = https://github.com/unicode-org/icu.git
+[submodule "external/FindICU.cmake"]
+	path = external/FindICU.cmake
+	url = https://github.com/julp/FindICU.cmake.git
