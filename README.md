@@ -42,10 +42,11 @@ filepath        image path to display [required]
 Optional arguments:
 -h --help       shows help message and exits
 -v --version    prints version information and exits
--v --verbose    show processing details [default: false]
+--verbose       show processing details [default: false]
 --color         colored output [default: false]
 -s --size       number of lines (size) to display (val > 0) [default: 20]
 -c --chars      characters to use (dark to light) [default: {}]
+-e --edge       enable edge detection and set edge color(HEX) [default: "000000"]
 ```
 
 ------
@@ -83,9 +84,6 @@ Image processed
 
 ------
 
-### Future Improvements
+### Notes
 
-Add edge detection kernel to improve output visual  
-~~Add colored image output~~  
-~~Wait for C++17 new functionalities for converting `std::string` to `std::wstring`, or use 3rd party library for it~~  
-Extend functionality to play videos in terminal (another project)  
+Edge detection has been implemented. But it won't improve the visual. The reason is that it is done on the image that is already downscaled, so less info available. Another reason is that edge detection is not guarenteed to generate a smooth and continous outline.
