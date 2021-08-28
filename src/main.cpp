@@ -31,6 +31,16 @@ struct Vec3
     }
 };
 
+// convert string (e.g. "FFFFFF") to vec3 (e.g. vec3(1.0, 1.0, 1.0))
+Vec3 strTovec(std::string val)
+{
+    Vec3 v;
+    v.r = static_cast<int>(std::stol(val.substr(0, 2), nullptr, 16)) / 255.0f;
+    v.g = static_cast<int>(std::stol(val.substr(2, 2), nullptr, 16)) / 255.0f;
+    v.b = static_cast<int>(std::stol(val.substr(4, 2), nullptr, 16)) / 255.0f;
+    return v;
+}
+
 int main(int argc, char** argv)
 {
 #ifdef _WIN32
@@ -43,7 +53,7 @@ int main(int argc, char** argv)
         .help("image path to display")
         .required();
     // add verbose option
-    argument.add_argument("-v", "--verbose")
+    argument.add_argument("--verbose")
         .help("show processing details")
         .default_value(false)
         .implicit_value(true);
@@ -62,6 +72,10 @@ int main(int argc, char** argv)
         .help("characters to use (dark to light)")
         .default_value(std::vector<std::string>())
         .append();
+    // add edge option
+    argument.add_argument("-e", "--edge")
+        .help("enable edge detection and set edge color(HEX)")
+        .default_value(std::string("000000"));
     // get arguments
     try
     {
@@ -88,6 +102,23 @@ int main(int argc, char** argv)
     }
     bool colored = argument.get<bool>("--color");
     bool verbose = argument.get<bool>("--verbose");
+    bool edgeEnable = argument.is_used("--edge");
+    std::string edgeColorStr = argument.get<std::string>("--edge");
+    Vec3 edgeColor;
+    try
+    {
+        edgeColor = strTovec(edgeColorStr);
+    }
+    catch(const std::invalid_argument& err)
+    {
+        if(verbose) std::cerr << "Failed to parse edge color: " << err.what() << std::endl;
+        exit(-1);
+    }
+    if(edgeColorStr.length() != 6)
+    {
+        if(verbose) std::cerr << "Invalid edge argument: length is not 6" << std::endl;
+        exit(-1);
+    }
     if(verbose) std::cout << "Arguments parsed" << std::endl;
     
     // load image
@@ -186,12 +217,14 @@ int main(int argc, char** argv)
     // prepare shaders
     GLuint shaderVert = glCreateShader(GL_VERTEX_SHADER);
     GLuint shaderFrag = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* shaderVertContent =
+    std::string shaderVertSource =
     #include "render.vert.glsl"
     ;
-    const char* shaderFragContent =
+    std::string shaderFragSource =
     #include "render.frag.glsl"
     ;
+    const char* shaderVertContent = shaderVertSource.c_str();
+    const char* shaderFragContent = shaderFragSource.c_str();
     glShaderSource(shaderVert, 1, &shaderVertContent, nullptr);
     glShaderSource(shaderFrag, 1, &shaderFragContent, nullptr);
     glCompileShader(shaderVert);
@@ -204,7 +237,7 @@ int main(int argc, char** argv)
         glGetShaderiv(shaderVert, GL_INFO_LOG_LENGTH, &infoLen);
         std::vector<GLchar> infoLog(infoLen+1);
         glGetShaderInfoLog(shaderVert, infoLen, nullptr, &infoLog[0]);
-        if(verbose) std::cerr << "Vertex shader failed to compile: " << infoLog[0] << std::endl;
+        if(verbose) std::cerr << "Vertex shader failed to compile: " << std::string(&infoLog[0]) << std::endl;
         exit(-1);
     }
     glGetShaderiv(shaderFrag, GL_COMPILE_STATUS, &compileSuccess);
@@ -214,7 +247,7 @@ int main(int argc, char** argv)
         glGetShaderiv(shaderFrag, GL_INFO_LOG_LENGTH, &infoLen);
         std::vector<GLchar> infoLog(infoLen+1);
         glGetShaderInfoLog(shaderFrag, infoLen, nullptr, &infoLog[0]);
-        if(verbose) std::cerr << "Fragment shader failed to compile: " << infoLog[0] << std::endl;
+        if(verbose) std::cerr << "Fragment shader failed to compile: " << std::string(&infoLog[0]) << std::endl;
         exit(-1);
     }
     GLuint shader = glCreateProgram();
@@ -262,8 +295,21 @@ int main(int argc, char** argv)
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(shader, "image"), 0);
     glBindTexture(GL_TEXTURE_2D, imgTex);
+    glUniform1f(glGetUniformLocation(shader, "winW"), (float)outputW);
+    glUniform1f(glGetUniformLocation(shader, "winH"), (float)outputH);
+    glUniform1i(glGetUniformLocation(shader, "edgeEnable"), (int)edgeEnable);
+    glUniform3f(glGetUniformLocation(shader, "edgeColor"), edgeColor.r, edgeColor.g, edgeColor.b);
     glBindVertexArray(VAO);
     glDrawArrays(GL_QUADS, 0, 4);
+
+    /* glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+    /* while(!glfwWindowShouldClose(context)) */
+    /* { */
+    /*     glfwPollEvents(); */
+    /*     glDrawArrays(GL_QUADS, 0, 4); */
+    /*     glfwSwapBuffers(context); */
+    /* } */
+    /* exit(0); */
 
     // get data from texture
     std::vector<Vec3> mem1(outputW * outputH);
