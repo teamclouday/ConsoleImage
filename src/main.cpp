@@ -203,9 +203,13 @@ int main(int argc, char** argv)
     {
     case 1:
         imgFormat = GL_RED;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
         break;
     case 2:
         imgFormat = GL_RG;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
         break;
     case 3:
         imgFormat = GL_RGB;
